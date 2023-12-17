@@ -1,14 +1,16 @@
-# Uncomment this to pass the first stage
 import socket
 
 
-def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!")
+def main() -> None:
+    server_socket = create_server()
+    client_socket, _ = server_socket.accept()
+    _ = client_socket.recv(1024)  # 1024 is the buffer size
+    response = "HTTP/1.1 200 OK\r\n\r\n"
+    client_socket.sendall(response.encode())
+    client_socket.close()
 
-    
-    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-    server_socket.accept()
+def create_server(address: str = "127.0.0.1", port: int = 4221, *, reuse_port=True) -> socket.socket:
+    return socket.create_server(address=(address, port), reuse_port=reuse_port)
 
 
 if __name__ == "__main__":
