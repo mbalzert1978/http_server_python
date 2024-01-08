@@ -1,6 +1,7 @@
 import contextlib
-import operator
 import socket
+
+from app import model
 
 HOST = "127.0.0.1"
 PORT = 4221
@@ -12,10 +13,8 @@ def main() -> None:
     con, _address = server_socket.accept()
     with contextlib.closing(con) as con:
         while data := con.recv(1024):
-            lines = data.decode(encoding="utf-8").split("\r\n")
-            _method, path, _http_version = operator.getitem(lines, 0).split()
-            print(_method, path, _http_version)
-            if path == "/":
+            request = model.Request(data)
+            if request.path == "/":
                 con.sendall(ok_200())
             else:
                 con.sendall(not_found_404())
