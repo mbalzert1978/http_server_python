@@ -33,7 +33,7 @@ class Index(HttpResponse):
 class Echo(HttpResponse):
     def __str__(self) -> str:
         _slash, _path, echo = self.data.full_path.partition("echo/")
-        return f"{super().__str__()}Content-Length: {len(echo)}\r\n\r\n{echo}"
+        return f"{super().__str__()}Content-Length: {len(echo)}{self._nl}{self._nl}{echo}"
 
 
 @dataclass
@@ -42,7 +42,7 @@ class NotFound(HttpResponse):
     _status: str = "NOT FOUND"
 
     def __str__(self) -> str:
-        return "HTTP/1.1 404 NOT FOUND\r\n\r\n"
+        return f"{self._version} {self._code} {self._status}{self._nl}{self._nl}"
 
 
 def parse(data: bytes) -> Request:
@@ -54,6 +54,6 @@ def parse(data: bytes) -> Request:
 def get(request: Request) -> HttpResponse:
     if request.full_path.startswith("/echo"):
         return Echo(request)
-    if request.full_path.startswith("/"):
+    if request.full_path == "/":
         return Index(request)
     return NotFound(request)
