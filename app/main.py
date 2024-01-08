@@ -12,10 +12,10 @@ def main() -> None:
     con, _address = server_socket.accept()
     with contextlib.closing(con) as con:
         while data := con.recv(1024).decode(encoding="utf-8"):
-            print(data)
+            # print(data)
             lines = data.split("\r\n")
-            print(lines)
-            _method, path, _http_version = operator.getitem(lines, 0).split()
+            # print(lines)
+            _method, path, _http_version = operator.getitem(lines, 0).split(" ")
             print(_method, path, _http_version)
             if path == "/":
                 con.sendall(ok_200())
