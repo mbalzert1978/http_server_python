@@ -96,21 +96,38 @@ class HttpResponse:
 @dataclasses.dataclass
 class Index(HttpResponse):
     def __str__(self) -> str:
+        """
+        HTTP/1.1 200 OK
+        Content-Type: text/plain
+        Content-Length: 11
+
+        curl/7.64.1
+        """
         return f"{super().__str__()}{self._nl}"
 
 
 @dataclasses.dataclass
-class Echo(HttpResponse):
+class TypeMixing:
+    _type: str = dataclasses.field(default="")
+
+
+@dataclasses.dataclass
+class TextMixing(TypeMixing):
     _type: str = dataclasses.field(default="text/plain", init=False)
 
+
+@dataclasses.dataclass
+class Echo(HttpResponse, TextMixing):
     def __str__(self) -> str:
         for index, path in enumerate(self.data.headers.route):
             if path != "echo":
                 continue
-            echo = "/".join(self.data.headers.route[index + 1:])
+            echo = "/".join(self.data.headers.route[index + 1 :])
             break
         return (
-            f"{super().__str__()}Content-Type: {self._type}{self._nl}Content-Length: {len(echo)}"
+            f"{super().__str__()}"
+            f"Content-Type: {self._type}{self._nl}"
+            f"Content-Length: {len(echo)}"
             f"{self._nl}{self._nl}{echo}"
         )
 
@@ -122,6 +139,25 @@ class NotFound(HttpResponse):
 
     def __str__(self) -> str:
         return f"{self._version} {self._code} {self._status}{self._nl}{self._nl}"
+
+
+@dataclasses.dataclass
+class UserAgent(HttpResponse, TextMixing):
+    def __str__(self) -> str:
+        """
+        HTTP/1.1 200 OK
+        Content-Type: text/plain
+        Content-Length: 11
+
+        curl/7.64.1
+        """
+        user_agent = getattr(self.data.headers, "user-agent")
+        return (
+            f"{super().__str__()}"
+            f"Content-Type: {self._type}{self._nl}"
+            f"Content-Length: {len(user_agent)}{self._nl}{self._nl}"
+            f"{user_agent}"
+        )
 
 
 def get(request: HttpRequest) -> HttpResponse:
