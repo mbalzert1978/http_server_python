@@ -1,5 +1,6 @@
+import asyncio
 import contextlib
-import socket
+from asyncio.streams import StreamReader, StreamWriter
 
 from app import request
 from app import response
@@ -8,21 +9,20 @@ HOST = "127.0.0.1"
 PORT = 4221
 
 
-def main() -> None:
-    server_socket = get_listener()
-    con: socket.socket
-    con, _address = server_socket.accept()
-    with contextlib.closing(con) as con:
-        while data := con.recv(1024):
+async def handle_connection(reader: StreamReader, writer: StreamWriter) -> None:
+    with contextlib.closing(writer) as writer:
+        while data := await reader.read(1024):
             _request = request.HttpRequest(data)
-            con.sendall(bytes(response.response_factory(_request)))
+            writer.write(bytes(await response.response_factory(_request).generate_response()))
+            await writer.drain()
 
 
-def get_listener(
-    address: str = HOST, port: int = PORT, *, reuse_port=True
-) -> socket.socket:
-    return socket.create_server(address=(address, port), reuse_port=reuse_port)
+async def main() -> None:
+    server = await asyncio.start_server(handle_connection, HOST, PORT, reuse_port=True)
+
+    async with server:
+        await server.serve_forever()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
