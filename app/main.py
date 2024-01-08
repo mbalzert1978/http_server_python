@@ -1,24 +1,35 @@
+import contextlib
+import operator
 import socket
 
-
-def parse_request(request: bytes) -> str:
-    req_str = request.decode()
-    lines = req_str.split("\r\n")
-    print(lines)
+HOST = "127.0.0.1"
+PORT = 4221
 
 
 def main() -> None:
-    server_socket = create_server()
-    client_socket, _ = server_socket.accept()
-    request = client_socket.recv(1024)
-    response = parse_request(request)
-    response = "HTTP/1.1 200 OK\r\n\r\n"
-    client_socket.sendall(response.encode())
-    client_socket.close()
+    server_socket = get_listener()
+    con: socket.socket
+    con, _address = server_socket.accept()
+    with contextlib.closing(con) as con:
+        while data := con.recv(1024).decode(encoding="utf-8"):
+            lines = data.split("\r\n")
+            _method, path, _http_version = operator.getitem(lines, 0).split()
+            if path == "/":
+                con.sendall(ok_200().encode())
+            else:
+                con.sendall(not_found_404().encode())
 
 
-def create_server(
-    address: str = "127.0.0.1", port: int = 4221, *, reuse_port=True
+def ok_200() -> str:
+    return "HTTP/1.1 200 OK\r\n\r\n"
+
+
+def not_found_404() -> str:
+    return "HTTP/1.1 404 NOT FOUND\r\n\r"
+
+
+def get_listener(
+    address: str = HOST, port: int = PORT, *, reuse_port=True
 ) -> socket.socket:
     return socket.create_server(address=(address, port), reuse_port=reuse_port)
 
