@@ -103,6 +103,17 @@ class Index(HttpResponse):
 class Echo(HttpResponse):
     _type: str = dataclasses.field(default="text/plain", init=False)
 
+    def __str__(self) -> str:
+        for index, path in enumerate(self.data.headers.route):
+            if path != "echo":
+                continue
+            echo = " ".join(self.data.headers.route[index + 1:])
+            break
+        return (
+            f"{super().__str__()}Content-Type: {self._type}{self._nl}Content-Length: {len(echo)}"
+            f"{self._nl}{self._nl}{echo}"
+        )
+
 
 @dataclasses.dataclass
 class NotFound(HttpResponse):
