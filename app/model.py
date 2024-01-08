@@ -163,6 +163,8 @@ class UserAgent(HttpResponse, TextMixing):
 def get(request: HttpRequest) -> HttpResponse:
     if "echo" in set(request.headers.route):
         return Echo(request)
+    if "user-agent" in set(request.headers.route):
+        return UserAgent(request)
     if request.headers.route == ("/",):
         return Index(request)
     return NotFound(request)
