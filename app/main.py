@@ -13,7 +13,8 @@ async def handle_connection(reader: StreamReader, writer: StreamWriter) -> None:
     with contextlib.closing(writer) as writer:
         while data := await reader.read(1024):
             _request = request.HttpRequest(data)
-            writer.write(bytes(await response.response_factory(_request).generate_response()))
+            _response = response.response_factory(_request)
+            writer.write(await _response.to_bytes())
             await writer.drain()
 
 

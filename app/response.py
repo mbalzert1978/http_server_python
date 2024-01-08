@@ -1,4 +1,5 @@
 import dataclasses
+
 from app import request
 
 
@@ -16,14 +17,21 @@ class HttpResponse:
     def __bytes__(self) -> bytes:
         return str(self).encode()
 
-    async def generate_response(self) -> bytes:
+    async def to_bytes(self) -> bytes:
         return bytes(self)
 
 
 @dataclasses.dataclass
 class Index(HttpResponse):
-    async def generate_response(self) -> bytes:
-        return bytes(self)
+    def __str__(self) -> str:
+        """
+        HTTP/1.1 200 OK
+        Content-Type: text/plain
+        Content-Length: 11
+
+        curl/7.64.1
+        """
+        return f"{super().__str__()}{self._nl}"
 
 
 @dataclasses.dataclass
@@ -38,7 +46,7 @@ class TextMixing(TypeMixing):
 
 @dataclasses.dataclass
 class Echo(HttpResponse, TextMixing):
-    async def generate_response(self) -> bytes:
+    def __str__(self) -> str:
         for index, path in enumerate(self.data.headers.route):
             if path != "echo":
                 continue
@@ -49,7 +57,7 @@ class Echo(HttpResponse, TextMixing):
             f"Content-Type: {self._type}{self._nl}"
             f"Content-Length: {len(echo)}"
             f"{self._nl}{self._nl}{echo}"
-        ).encode()
+        )
 
 
 @dataclasses.dataclass
@@ -57,20 +65,27 @@ class NotFound(HttpResponse):
     _code: int = 404
     _status: str = "NOT FOUND"
 
-    async def generate_response(self) -> bytes:
-        return bytes(self)
+    def __str__(self) -> str:
+        return f"{self._version} {self._code} {self._status}{self._nl}{self._nl}"
 
 
 @dataclasses.dataclass
 class UserAgent(HttpResponse, TextMixing):
-    async def generate_response(self) -> bytes:
+    def __str__(self) -> str:
+        """
+        HTTP/1.1 200 OK
+        Content-Type: text/plain
+        Content-Length: 11
+
+        curl/7.64.1
+        """
         user_agent = getattr(self.data.headers, "User-Agent")
         return (
             f"{super().__str__()}"
             f"Content-Type: {self._type}{self._nl}"
             f"Content-Length: {len(user_agent)}{self._nl}{self._nl}"
             f"{user_agent}"
-        ).encode()
+        )
 
 
 def response_factory(request: request.HttpRequest) -> HttpResponse:
