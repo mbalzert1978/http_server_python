@@ -1,7 +1,7 @@
 import contextlib
 import socket
 
-from app import model
+import model
 
 HOST = "127.0.0.1"
 PORT = 4221
