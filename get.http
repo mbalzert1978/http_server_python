@@ -8,3 +8,7 @@ Content-Type: application/json
 ####
 
 curl -v -X GET http://{{host}}/echo/humpty-humpty
+
+####
+
+curl -v -X GET http://localhost:4221/user-agent -H "User-Agent: donkey/Horsey-vanilla"

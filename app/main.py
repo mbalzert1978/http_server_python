@@ -1,7 +1,8 @@
 import contextlib
 import socket
 
-from app import model
+from app import request
+from app import response
 
 HOST = "127.0.0.1"
 PORT = 4221
@@ -13,8 +14,8 @@ def main() -> None:
     con, _address = server_socket.accept()
     with contextlib.closing(con) as con:
         while data := con.recv(1024):
-            request = model.HttpRequest(data)
-            con.sendall(bytes(model.get(request)))
+            _request = request.HttpRequest(data)
+            con.sendall(bytes(response.response_factory(_request)))
 
 
 def get_listener(
