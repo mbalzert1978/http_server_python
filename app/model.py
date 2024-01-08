@@ -31,9 +31,14 @@ class Index(HttpResponse):
 
 @dataclass
 class Echo(HttpResponse):
+    _type: str = field(default="text/plain", init=False)
+
     def __str__(self) -> str:
         _slash, _path, echo = self.data.full_path.partition("echo/")
-        return f"{super().__str__()}Content-Length: {len(echo)}{self._nl}{self._nl}{echo}"
+        return (
+            f"{super().__str__()}{self._nl}Content-Type: {self._type}{self._nl}Content-Length: {len(echo)}"
+            f"{self._nl}{self._nl}{echo}"
+        )
 
 
 @dataclass
