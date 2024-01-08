@@ -36,7 +36,7 @@ class Echo(HttpResponse):
     def __str__(self) -> str:
         _slash, _path, echo = self.data.full_path.partition("echo/")
         return (
-            f"{super().__str__()}{self._nl}Content-Type: {self._type}{self._nl}Content-Length: {len(echo)}"
+            f"{super().__str__()}Content-Type: {self._type}{self._nl}Content-Length: {len(echo)}"
             f"{self._nl}{self._nl}{echo}"
         )
 
@@ -57,7 +57,7 @@ def parse(data: bytes) -> Request:
 
 
 def get(request: Request) -> HttpResponse:
-    if request.full_path.startswith("/echo"):
+    if "echo" in request.full_path:
         return Echo(request)
     if request.full_path == "/":
         return Index(request)
