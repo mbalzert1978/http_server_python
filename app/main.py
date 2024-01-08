@@ -1,7 +1,7 @@
 import contextlib
 import socket
 
-from app import model
+import model
 
 HOST = "127.0.0.1"
 PORT = 4221
@@ -13,19 +13,8 @@ def main() -> None:
     con, _address = server_socket.accept()
     with contextlib.closing(con) as con:
         while data := con.recv(1024):
-            request = model.Request(data)
-            if request.path == "/":
-                con.sendall(ok_200())
-            else:
-                con.sendall(not_found_404())
-
-
-def ok_200() -> bytes:
-    return "HTTP/1.1 200 OK\r\n\r\n".encode()
-
-
-def not_found_404() -> bytes:
-    return "HTTP/1.1 404 NOT FOUND\r\n\r\n".encode()
+            request = model.parse(data)
+            con.sendall(bytes(model.get(request)))
 
 
 def get_listener(
