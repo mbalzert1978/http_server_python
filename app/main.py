@@ -1,3 +1,4 @@
+import contextlib
 import operator
 import socket
 
@@ -9,15 +10,15 @@ def main() -> None:
     server_socket = get_listener()
     con: socket.socket
     con, _address = server_socket.accept()
-    while data := con.recv(1024):
-        lines = data.decode(encoding="utf-8").split("\r\n")
-        _method, path, _http_version = operator.getitem(lines, 0).split()
-        if path == "/":
-            con.sendall(ok_200())
-            con.close()
-        else:
-            con.sendall(not_found_404())
-            con.close()
+    with contextlib.closing(con) as con:
+        while data := con.recv(1024):
+            lines = data.decode(encoding="utf-8").split("\r\n")
+            _method, path, _http_version = operator.getitem(lines, 0).split()
+            print(_method, path, _http_version)
+            if path == "/":
+                con.sendall(ok_200())
+            else:
+                con.sendall(not_found_404())
 
 
 def ok_200() -> bytes:
