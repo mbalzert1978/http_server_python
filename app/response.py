@@ -76,7 +76,7 @@ class UserAgent(HttpResponse, TextMixing):
 
         curl/7.64.1
         """
-        user_agent = getattr(self.data.headers, "user-agent")
+        user_agent = getattr(self.data.headers, "User-Agent")
         return (
             f"{super().__str__()}"
             f"Content-Type: {self._type}{self._nl}"
