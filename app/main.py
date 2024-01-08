@@ -25,7 +25,7 @@ def ok_200() -> bytes:
 
 
 def not_found_404() -> bytes:
-    return "HTTP/1.1 404 NOT FOUND\r\n\r".encode()
+    return "HTTP/1.1 404 NOT FOUND\r\n\r\n".encode()
 
 
 def get_listener(
