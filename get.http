@@ -1,3 +1,10 @@
 @host = 127.0.0.1:4221
 
+GET http://{{host}}
+Content-Type: application/json
+
+{"test":123}
+
+####
+
 curl -v -X GET http://{{host}}/echo/humpty-humpty
