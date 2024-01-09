@@ -32,7 +32,7 @@ async def handle_connection(
     reader: streams.StreamReader, writer: streams.StreamWriter, directory: Path
 ) -> None:
     with contextlib.closing(writer):
-        while data := await reader.read(1024):
+        while data := await reader.read(2048):
             _request = request.HttpRequest(data)
             _request._directory = directory
             _response = response.response_factory(_request)

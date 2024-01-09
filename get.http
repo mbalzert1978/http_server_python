@@ -10,6 +10,9 @@ Content-Type: application/json
 curl -v -X GET http://{{host}}/echo/humpty/humpty
 ####
 
+curl -v -X GET http://{{host}}/wrong/humpty/humpty
+####
+
 curl -v -X GET http://{{host}}/files/test.txt
 
 ####

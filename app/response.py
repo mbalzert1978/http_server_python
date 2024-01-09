@@ -1,8 +1,27 @@
 import dataclasses
-import operator
 from pathlib import Path
 
 from app import request
+
+
+@dataclasses.dataclass
+class TypeMixing:
+    _type: str = dataclasses.field(default="")
+
+@dataclasses.dataclass
+class TextMixing(TypeMixing):
+    _type: str = dataclasses.field(default="text/plain", init=False)
+
+@dataclasses.dataclass
+class JsonMixing(TypeMixing):
+    _type: str = dataclasses.field(default="application/json", init=False)
+
+
+@dataclasses.dataclass
+class OctetMixing(TypeMixing):
+    _type: str = dataclasses.field(default="application/octet-stream", init=False)
+
+
 
 
 @dataclasses.dataclass
@@ -24,7 +43,7 @@ class HttpResponse:
 
 
 @dataclasses.dataclass
-class Index(HttpResponse):
+class Index(HttpResponse, TextMixing):
     def __str__(self) -> str:
         """
         HTTP/1.1 200 OK
@@ -34,26 +53,6 @@ class Index(HttpResponse):
         curl/7.64.1
         """
         return f"{super().__str__()}{self._nl}"
-
-
-@dataclasses.dataclass
-class TypeMixing:
-    _type: str = dataclasses.field(default="")
-
-
-@dataclasses.dataclass
-class JsonMixing(TypeMixing):
-    _type: str = dataclasses.field(default="application/json", init=False)
-
-
-@dataclasses.dataclass
-class OctetMixing(TypeMixing):
-    _type: str = dataclasses.field(default="application/octet-stream", init=False)
-
-
-@dataclasses.dataclass
-class TextMixing(TypeMixing):
-    _type: str = dataclasses.field(default="text/plain", init=False)
 
 
 @dataclasses.dataclass
@@ -99,12 +98,16 @@ class Files(HttpResponse, OctetMixing):
 
 
 @dataclasses.dataclass
-class NotFound(HttpResponse):
+class NotFound(HttpResponse, TextMixing):
     _code: int = 404
     _status: str = "NOT FOUND"
 
     def __str__(self) -> str:
-        return f"{self._version} {self._code} {self._status}{self._nl}{self._nl}"
+            return (
+            f"{super().__str__()}"
+            f"Content-Type: {self._type}{self._nl}"
+            f"Content-Length: 0{self._nl}{self._nl}"
+        )
 
 
 @dataclasses.dataclass
@@ -135,8 +138,7 @@ def response_factory(request: request.HttpRequest) -> HttpResponse:
         case ("user-agent", *_):
             return UserAgent(request)
         case ("files", filename):
-            file_path = request._directory / filename
-            if not file_path.exists():
+            if not (file_path := request._directory / filename).exists():
                 return NotFound(request)
             return Files(request, file_path)
         case _:
