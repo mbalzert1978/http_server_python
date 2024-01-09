@@ -1,4 +1,6 @@
 import dataclasses
+import operator
+from pathlib import Path
 
 from app import request
 
@@ -40,6 +42,16 @@ class TypeMixing:
 
 
 @dataclasses.dataclass
+class JsonMixing(TypeMixing):
+    _type: str = dataclasses.field(default="application/json", init=False)
+
+
+@dataclasses.dataclass
+class OctetMixing(TypeMixing):
+    _type: str = dataclasses.field(default="application/octet-stream", init=False)
+
+
+@dataclasses.dataclass
 class TextMixing(TypeMixing):
     _type: str = dataclasses.field(default="text/plain", init=False)
 
@@ -47,16 +59,43 @@ class TextMixing(TypeMixing):
 @dataclasses.dataclass
 class Echo(HttpResponse, TextMixing):
     def __str__(self) -> str:
-        for index, path in enumerate(self.data.headers.route):
+        for index, path in enumerate(self.data.header.route):
             if path != "echo":
                 continue
-            echo = "/".join(self.data.headers.route[index + 1 :])
+            echo = "/".join(self.data.header.route[index + 1 :])
             break
         return (
             f"{super().__str__()}"
             f"Content-Type: {self._type}{self._nl}"
             f"Content-Length: {len(echo)}"
             f"{self._nl}{self._nl}{echo}"
+        )
+
+
+@dataclasses.dataclass
+class Files(HttpResponse, OctetMixing):
+    data: request.HttpRequest
+    file_path: Path
+    _body: bytes = dataclasses.field(default=b"", init=False)
+
+
+
+    def read_file(self) -> None:
+        self._body = self.file_path.read_bytes()
+
+    def __str__(self) -> str:
+        """
+        HTTP/1.1 200 OK
+        Content-Type: application/octet-stream
+        Content-Length: 11
+
+        curl/7.64.1
+        """
+        return (
+            f"{super().__str__()}"
+            f"Content-Type: {self._type}{self._nl}"
+            f"Content-Length: {len(self._body)}{self._nl}{self._nl}"
+            f"{self._body.decode(encoding='utf-8')}"
         )
 
 
@@ -79,7 +118,7 @@ class UserAgent(HttpResponse, TextMixing):
 
         curl/7.64.1
         """
-        user_agent = getattr(self.data.headers, "User-Agent")
+        user_agent = getattr(self.data.header, "User-Agent")
         return (
             f"{super().__str__()}"
             f"Content-Type: {self._type}{self._nl}"
@@ -89,10 +128,17 @@ class UserAgent(HttpResponse, TextMixing):
 
 
 def response_factory(request: request.HttpRequest) -> HttpResponse:
-    if "echo" in set(request.headers.route):
-        return Echo(request)
-    if "user-agent" in set(request.headers.route):
-        return UserAgent(request)
-    if request.headers.route == ("/",):
-        return Index(request)
-    return NotFound(request)
+    match request.header.route:
+        case ("/",):
+            return Index(request)
+        case ("/echo", *_):
+            return Echo(request)
+        case ("/user-agent", *_):
+            return UserAgent(request)
+        case ("/files", filename):
+            file_path = request._directory / filename[1:]
+            if not file_path.exists():
+                return NotFound(request)
+            return Files(request)
+        case _:
+            return NotFound(request)

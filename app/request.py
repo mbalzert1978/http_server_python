@@ -1,15 +1,17 @@
 import json
 import operator
+
 from app import headers
 
 
 class HttpRequest:
-    headers: headers.Headers
+    header: headers.Headers
     body: dict
 
     def __init__(self, data: bytes) -> None:
         encode_data = data.decode(encoding="utf-8").splitlines()
-        self.headers = headers.Headers(data)
+        self.header = headers.Headers(data)
+        self._directory = None
         self.__init_body(encode_data)
 
     def __init_body(self, parsed: list[str]) -> None:
