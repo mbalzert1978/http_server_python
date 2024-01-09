@@ -8,9 +8,11 @@ from app import request
 class TypeMixing:
     _type: str = dataclasses.field(default="")
 
+
 @dataclasses.dataclass
 class TextMixing(TypeMixing):
     _type: str = dataclasses.field(default="text/plain", init=False)
+
 
 @dataclasses.dataclass
 class JsonMixing(TypeMixing):
@@ -20,8 +22,6 @@ class JsonMixing(TypeMixing):
 @dataclasses.dataclass
 class OctetMixing(TypeMixing):
     _type: str = dataclasses.field(default="application/octet-stream", init=False)
-
-
 
 
 @dataclasses.dataclass
@@ -77,6 +77,9 @@ class Files(HttpResponse, OctetMixing):
     file_path: Path
     _body: bytes = dataclasses.field(default=b"", init=False)
 
+    def __post_init__(self) -> None:
+        self.read_file()
+
     def read_file(self) -> None:
         self._body = self.file_path.read_bytes()
 
@@ -88,7 +91,6 @@ class Files(HttpResponse, OctetMixing):
 
         curl/7.64.1
         """
-        self.read_file()
         return (
             f"{super().__str__()}"
             f"Content-Type: {self._type}{self._nl}"
@@ -98,12 +100,44 @@ class Files(HttpResponse, OctetMixing):
 
 
 @dataclasses.dataclass
+class Writer(HttpResponse, TextMixing):
+    data: request.HttpRequest
+    file_path: Path
+    _code: int = dataclasses.field(default=201, init=False)
+    _status: str = dataclasses.field(default="CREATED", init=False)
+
+    def __post_init__(self) -> None:
+        self.write_file()
+
+    def write_file(self) -> None:
+        if isinstance(self.data.body, bytes):
+            self.file_path.write_bytes(self.data.body)
+
+    def __str__(self) -> str:
+        """
+        HTTP/1.1 201 Created
+        Content-Type: text/plain
+        Content-Length: 27
+        Connection: closed
+
+        File successfully uploaded.
+        """
+        msg = "File successfully uploaded."
+        return (
+            f"{super().__str__()}"
+            f"Content-Type: {self._type}{self._nl}"
+            f"Content-Length: {len(msg)}{self._nl}{self._nl}"
+            f"{msg}"
+        )
+
+
+@dataclasses.dataclass
 class NotFound(HttpResponse, TextMixing):
     _code: int = 404
     _status: str = "NOT FOUND"
 
     def __str__(self) -> str:
-            return (
+        return (
             f"{super().__str__()}"
             f"Content-Type: {self._type}{self._nl}"
             f"Content-Length: 0{self._nl}{self._nl}"
@@ -137,9 +171,11 @@ def response_factory(request: request.HttpRequest) -> HttpResponse:
             return Echo(request)
         case ("user-agent", *_):
             return UserAgent(request)
-        case ("files", filename):
+        case ("files", filename) if request.header.method == "GET":
             if not (file_path := request._directory / filename).exists():
                 return NotFound(request)
             return Files(request, file_path)
+        case ("files", filename) if request.header.method == "POST":
+            return Writer(request, request._directory / filename)
         case _:
             return NotFound(request)

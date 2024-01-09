@@ -6,7 +6,7 @@ from app import headers
 
 class HttpRequest:
     header: headers.Headers
-    body: dict
+    body: dict | bytes
 
     def __init__(self, data: bytes) -> None:
         encode_data = data.decode(encoding="utf-8").splitlines()
@@ -24,6 +24,8 @@ class HttpRequest:
         if isinstance(body, dict):
             setattr(self, "body", body)
             return
+        if isinstance(body, bytes):
+            setattr(self, "body", body)
         raise ValueError(f"Invalid body type: {type(body)}")
 
     def __repr__(self) -> str:
