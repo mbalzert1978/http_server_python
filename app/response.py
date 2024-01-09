@@ -1,4 +1,5 @@
 import dataclasses
+import json
 from pathlib import Path
 
 from app import request
@@ -110,8 +111,16 @@ class Writer(HttpResponse, TextMixing):
         self.write_file()
 
     def write_file(self) -> None:
-        if isinstance(self.data.body, bytes):
-            self.file_path.write_bytes(self.data.body)
+        match self.data.body:
+            case bytes():
+                body = self.data.body
+            case str():
+                body = self.data.body.encode(encoding="utf-8")
+            case dict() | list():
+                body = json.dumps(self.data.body, indent=4).encode(encoding="utf-8")
+            case _:
+                raise ValueError(f"Invalid body type: {type(self.data.body)}")
+        self.file_path.write_bytes(body)
 
     def __str__(self) -> str:
         """

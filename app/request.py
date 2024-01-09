@@ -19,6 +19,9 @@ class HttpRequest:
         if not body:
             body = {}
         if isinstance(body, str):
+            if not isjson(body):
+                setattr(self,"body", body)
+                return
             setattr(self, "body", json.loads(body))
             return
         if isinstance(body, dict):
@@ -35,3 +38,10 @@ class HttpRequest:
     def __str__(self) -> str:
         cls = type(self)
         return f"{cls.__name__}({self.__dict__})"
+
+def isjson(s: str) -> bool:
+    try:
+        json.loads(s)
+        return True
+    except json.JSONDecodeError:
+        return False
