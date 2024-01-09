@@ -15,21 +15,8 @@ class HttpRequest:
         self.__init_body(encode_data)
 
     def __init_body(self, parsed: list[str]) -> None:
-        body: str | dict = operator.getitem(parsed, -1)
-        if not body:
-            body = {}
-        if isinstance(body, str):
-            if not isjson(body):
-                setattr(self,"body", body)
-                return
-            setattr(self, "body", json.loads(body))
-            return
-        if isinstance(body, dict):
-            setattr(self, "body", body)
-            return
-        if isinstance(body, bytes):
-            setattr(self, "body", body)
-        raise ValueError(f"Invalid body type: {type(body)}")
+        body: str | dict | bytes = operator.getitem(parsed, -1) or {}
+        setattr(self, "body", json.loads(body) if isjson(body) else body)
 
     def __repr__(self) -> str:
         cls = type(self)
@@ -39,7 +26,8 @@ class HttpRequest:
         cls = type(self)
         return f"{cls.__name__}({self.__dict__})"
 
-def isjson(s: str) -> bool:
+
+def isjson(s: str | dict | bytes) -> bool:
     try:
         json.loads(s)
         return True

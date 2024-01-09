@@ -10,6 +10,7 @@ from app import request, response
 HOST = "127.0.0.1"
 PORT = 4221
 SHARE = Path.cwd() / "share"
+BUFSIZE = 4096
 
 
 def parse_args():
@@ -32,7 +33,7 @@ async def handle_connection(
     reader: streams.StreamReader, writer: streams.StreamWriter, directory: Path
 ) -> None:
     with contextlib.closing(writer):
-        while data := await reader.read(4096):
+        while data := await reader.read(BUFSIZE):
             _request = request.HttpRequest(data)
             _request._directory = directory
             _response = response.response_factory(_request)
