@@ -78,8 +78,6 @@ class Files(HttpResponse, OctetMixing):
     file_path: Path
     _body: bytes = dataclasses.field(default=b"", init=False)
 
-
-
     def read_file(self) -> None:
         self._body = self.file_path.read_bytes()
 
@@ -91,6 +89,7 @@ class Files(HttpResponse, OctetMixing):
 
         curl/7.64.1
         """
+        self.read_file()
         return (
             f"{super().__str__()}"
             f"Content-Type: {self._type}{self._nl}"
@@ -131,14 +130,14 @@ def response_factory(request: request.HttpRequest) -> HttpResponse:
     match request.header.route:
         case ("/",):
             return Index(request)
-        case ("/echo", *_):
+        case ("echo", *_):
             return Echo(request)
-        case ("/user-agent", *_):
+        case ("user-agent", *_):
             return UserAgent(request)
-        case ("/files", filename):
-            file_path = request._directory / filename[1:]
+        case ("files", filename):
+            file_path = request._directory / filename
             if not file_path.exists():
                 return NotFound(request)
-            return Files(request)
+            return Files(request, file_path)
         case _:
             return NotFound(request)

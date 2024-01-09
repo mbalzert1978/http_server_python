@@ -9,6 +9,7 @@ from app import request, response
 
 HOST = "127.0.0.1"
 PORT = 4221
+SHARE = Path.cwd() / "share"
 
 
 def parse_args():
@@ -18,8 +19,11 @@ def parse_args():
     parser.add_argument(
         "--directory",
         type=Path,
-        help="The directory to serve files from",
-        required=True,
+        help=(
+            "The directory to serve files from. "
+            "Defaults to the current working directory '/share'."
+        ),
+        default=SHARE,
     )
     return parser.parse_args()
 

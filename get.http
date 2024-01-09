@@ -7,8 +7,15 @@ Content-Type: application/json
 
 ####
 
-curl -v -X GET http://{{host}}/echo/humpty-humpty
+curl -v -X GET http://{{host}}/echo/humpty/humpty
+####
+
+curl -v -X GET http://{{host}}/files/test.txt
 
 ####
 
 curl -v -X GET http://localhost:4221/user-agent -H "User-Agent: donkey/Horsey-vanilla"
+
+####
+
+curl -v -X GET http://localhost:4221/files/non-existentMonkey_dumpty_Coo_yikes
