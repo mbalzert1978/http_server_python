@@ -1,47 +1,44 @@
 import json
-import operator
 
 from app import headers
 
+CRLF = "\r\n"
 
-class HttpRequest:
-    header: headers.Headers
-    body: dict | bytes
 
-    def __init__(self, data: bytes) -> None:
-        encode_data = data.decode(encoding="utf-8").splitlines()
-        self.header = headers.Headers(data)
-        self._directory = None
-        self.__init_body(encode_data)
+def request_from_stream(
+    stream: bytes,
+    builder: headers.RequestBuilder = headers.RequestBuilder(),
+) -> headers.Request:
+    headers, body = _get_headers_body(stream)
+    method, url, version = _get_method_url_version(headers.pop(0))
+    builder.add_method(method).add_url(url).add_version(version)
+    builder.add_headers(dict(_get_header(header) for header in headers))
+    builder.add_body(_parse_body(body.pop(0)))
+    return builder.build()
 
-    def __init_body(self, parsed: list[str]) -> None:
-        body: str | dict = operator.getitem(parsed, -1)
-        if not body:
-            body = {}
-        if isinstance(body, str):
-            if not isjson(body):
-                setattr(self,"body", body)
-                return
-            setattr(self, "body", json.loads(body))
-            return
-        if isinstance(body, dict):
-            setattr(self, "body", body)
-            return
-        if isinstance(body, bytes):
-            setattr(self, "body", body)
-        raise ValueError(f"Invalid body type: {type(body)}")
 
-    def __repr__(self) -> str:
-        cls = type(self)
-        return f"{cls.__name__}({self.__dict__!r})"
+def _get_headers_body(stream: bytes) -> tuple[list[str], list[str]]:
+    request = stream.decode().rsplit(CRLF)
+    split_ = request.index("")
+    req = request[:split_]
+    body = request[split_ + 1 :]
+    return req, body
 
-    def __str__(self) -> str:
-        cls = type(self)
-        return f"{cls.__name__}({self.__dict__})"
 
-def isjson(s: str) -> bool:
+def _parse_body(body: str | dict | bytes) -> dict | str | bytes:
+    if not body:
+        return {}
     try:
-        json.loads(s)
-        return True
+        return json.loads(body)  # type: ignore[arg-type]
     except json.JSONDecodeError:
-        return False
+        return body
+
+
+def _get_header(line: str) -> tuple[str, str]:
+    key, value = line.split(":", 1)
+    return key.strip(), value.strip()
+
+
+def _get_method_url_version(lines: str) -> tuple[str, str, str]:
+    method, path, version = lines.split()
+    return method.strip(), path.strip(), version.strip()
