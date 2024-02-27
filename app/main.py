@@ -6,7 +6,7 @@ from asyncio import streams
 from pathlib import Path
 
 from app.request import request_from_stream
-from app.response import echo, files, index, user_agent
+from app.response import echo, get_files, index, post_files, user_agent
 from app.router import Router
 
 HOST = "127.0.0.1"
@@ -39,17 +39,13 @@ async def handle_connection(
         .add_route(index, "/")
         .add_route(echo, "echo")
         .add_route(user_agent, "user-agent")
-        .add_route(functools.partial(files, directory=directory), "files")
+        .add_route(functools.partial(get_files, directory=directory), "files")
+        .add_route(functools.partial(post_files, directory=directory), "files", "POST")
     )
     with contextlib.closing(writer):
         while data := await reader.read(BUFSIZE):
-            # print(data.decode(encoding="utf-8"))
             _request = request_from_stream(data)
             _response = router.handle_route(_request)
-            # print(data.decode().split("\r\n\r\n"))
-            # _request = request.HttpRequest(data)
-            # _request._directory = directory
-            # _response = response.response_factory(_request)
             writer.write(await _response.to_bytes())
             await writer.drain()
 
