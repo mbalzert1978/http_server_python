@@ -1,5 +1,6 @@
 import typing
 from dataclasses import dataclass, field
+from http import HTTPMethod
 
 from app.handler import not_found
 from app.headers import Request
@@ -16,7 +17,7 @@ class Router:
         self,
         handler: Handler,
         route: str = "/",
-        method: str = "GET",
+        method: HTTPMethod = HTTPMethod.GET,
     ) -> typing.Self:
         self.routes.setdefault(method, {}).setdefault(route, handler)
         return self
