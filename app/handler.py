@@ -6,6 +6,7 @@ from app.headers import Request
 from app.response import Response, ResponseBuilder
 
 INDENT = 4
+BUILDER = ResponseBuilder().add_version().add_code().add_status()
 
 
 def not_found(_: Request) -> "Response":
@@ -21,28 +22,16 @@ def not_found(_: Request) -> "Response":
 
 
 def index(_: Request) -> "Response":
-    return ResponseBuilder().add_version().add_code().add_status().add_type().build()
+    return BUILDER.add_type().build()
 
 
 def echo(request: Request) -> "Response":
-    return (
-        ResponseBuilder()
-        .add_version()
-        .add_code()
-        .add_status()
-        .add_type()
-        .add_body(request.url.lstrip("/echo/"))
-        .build()
-    )
+    return BUILDER.add_type().add_body(request.url.lstrip("/echo/")).build()
 
 
 def user_agent(request: Request) -> "Response":
     return (
-        ResponseBuilder()
-        .add_version()
-        .add_code()
-        .add_status()
-        .add_type()
+        BUILDER.add_type()
         .add_header(request.headers)
         .add_body(request.headers.get("User-Agent"))
         .build()
@@ -55,15 +44,7 @@ def get_files(request: Request, directory: Path) -> "Response":
     except OSError:
         return not_found(request)
     else:
-        return (
-            ResponseBuilder()
-            .add_version()
-            .add_code()
-            .add_status()
-            .add_type("application/octet-stream")
-            .add_body(file)
-            .build()
-        )
+        return BUILDER.add_type("application/octet-stream").add_body(file).build()
 
 
 def post_files(request: Request, directory: Path) -> "Response":

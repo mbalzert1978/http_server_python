@@ -51,7 +51,6 @@ async def handle_connection(
         while data := await reader.read(BUFSIZE):
             _request = request_from_stream(data)
             _response = router.handle_route(_request)
-            print(_response)
             writer.write(await _response.to_bytes())
             await writer.drain()
 
