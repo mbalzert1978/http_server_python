@@ -1,46 +1,61 @@
-import operator
+import typing
+from collections import namedtuple
+from dataclasses import dataclass, field
+from http import HTTPMethod
+
+Route = namedtuple("Route", ["route", "values"])
 
 
-class Headers:
-    method: str
+def _generate_route(url: str = "/"):
+    if url == "/":
+        return Route("/", [])
+    base, *values = [route for route in url.split("/") if route]
+    return Route(base, values)
+
+
+@dataclass
+class Request:
     version: str
-    path: str
-    route: tuple[str, ...]
+    method: HTTPMethod
+    url: str
+    headers: dict[str, str]
+    route: Route = field(default_factory=_generate_route)
+    body: typing.Any = field(default_factory=dict)
 
-    def __init__(self, data: bytes) -> None:
-        encode_data = data.decode(encoding="utf-8").splitlines()
-        self.__init(encode_data)
-        self.__init_dict(encode_data)
-        self.__init_route()
 
-    def __init(self, parsed: list[str]) -> None:
-        method, path, version = operator.getitem(parsed, 0).split()
-        setattr(self, "method", method.strip())
-        setattr(self, "path", path.strip())
-        setattr(self, "version", version.strip())
+@dataclass
+class RequestBuilder:
+    method: HTTPMethod | None = None
+    version: str | None = None
+    url: str | None = None
+    headers: dict[str, str] | None = None
+    route: Route | None = None
+    body: typing.Any = None
 
-    def __init_route(self) -> None:
-        raw_route = tuple(route for route in self.path.split("/") if route)
-        if not raw_route:
-            self.route = ("/",)
-            return
-        self.route = raw_route
+    def add_method(self, method: str = "GET") -> typing.Self:
+        self.method = HTTPMethod(method)
+        return self
 
-    def __init_dict(self, parsed: list[str]) -> None:
-        def set_kv(attr: str) -> tuple[str, str]:
-            key, value = attr.split(":", 1)
-            return key.strip(), value.strip()
+    def add_version(self, version: str = "HTTP/1.1") -> typing.Self:
+        self.version = version
+        return self
 
-        for attr in parsed[1:]:
-            if not attr:
-                break
-            key, value = set_kv(attr)
-            setattr(self, key, value)
+    def add_url(self, url: str = "/") -> typing.Self:
+        self.url = url
+        self.route = _generate_route(url)
+        return self
 
-    def __repr__(self) -> str:
-        cls = type(self)
-        return f"{cls.__name__}({self.__dict__!r})"
+    def add_headers(self, headers: dict[str, str]) -> typing.Self:
+        if self.headers is None:
+            self.headers = {}
+        self.headers |= headers
+        return self
 
-    def __str__(self) -> str:
-        cls = type(self)
-        return f"{cls.__name__}({self.__dict__})"
+    def add_body(self, body: typing.Any = None) -> typing.Self:
+        if body is None:
+            body = {}
+        self.body = body
+        return self
+
+    def build(self) -> Request:
+        return Request(**self.__dict__)
