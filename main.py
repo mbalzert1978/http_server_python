@@ -6,9 +6,9 @@ from asyncio import streams
 from http import HTTPMethod
 from pathlib import Path
 
-from app.handler import echo, get_files, index, post_files, user_agent
-from app.request import request_from_stream
-from app.router import Router
+from http_server_python.handler import echo, get_files, index, post_files, user_agent
+from http_server_python.request import request_from_stream
+from http_server_python.router import Router
 
 HOST = "127.0.0.1"
 PORT = 4221
