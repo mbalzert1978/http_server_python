@@ -1,5 +1,3 @@
-from app.request import request_from_stream
-
 REQUEST = """\
 POST /files/donkey_yikes_humpty_vanilla HTTP/1.1\r
 Host: localhost:4221\r
@@ -18,13 +16,3 @@ Accept-Encoding: gzip\r
 \r
 \r
 """.encode()
-
-
-def test_request_parser():
-    result = request_from_stream(REQUEST)
-    assert str(result.method) == "POST"
-
-
-def test_echo_request_parser():
-    result = request_from_stream(ECHO_REQUEST)
-    assert str(result.method) == "GET"
