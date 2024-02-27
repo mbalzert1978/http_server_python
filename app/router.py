@@ -1,8 +1,9 @@
 import typing
 from dataclasses import dataclass, field
 
+from app.handler import not_found
 from app.headers import Request
-from app.response import Response, not_found
+from app.response import Response
 
 Handler = typing.Callable[[Request], Response]
 

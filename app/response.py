@@ -1,103 +1,9 @@
 from __future__ import annotations
 
 import dataclasses
-import json
 import typing
-from pathlib import Path
-
-from app.headers import Request
 
 CRLF = "\r\n"
-
-
-def not_found(_: Request) -> "Response":
-    return (
-        ResponseBuilder()
-        .add_version()
-        .add_code(404)
-        .add_status("NOT FOUND")
-        .add_type()
-        .add_body("")
-        .build()
-    )
-
-
-def index(_: Request) -> "Response":
-    return ResponseBuilder().add_version().add_code().add_status().add_type().build()
-
-
-def echo(request: Request) -> "Response":
-    return (
-        ResponseBuilder()
-        .add_version()
-        .add_code()
-        .add_status()
-        .add_type()
-        .add_body(request.url.lstrip("/echo/"))
-        .build()
-    )
-
-
-def user_agent(request: Request) -> "Response":
-    return (
-        ResponseBuilder()
-        .add_version()
-        .add_code()
-        .add_status()
-        .add_type()
-        .add_header(request.headers)
-        .add_body(request.headers.get("User-Agent"))
-        .build()
-    )
-
-
-def get_files(request: Request, directory: Path) -> "Response":
-    builder = ResponseBuilder().add_version()
-    file_name: str = request.route.values.pop()
-    try:
-        file = (directory / file_name).read_text()
-    except Exception:
-        response = not_found(request)
-    else:
-        response = (
-            builder.add_code(200)
-            .add_status("OK")
-            .add_type("application/octet-stream")
-            .add_body(file)
-            .build()
-        )
-    return response
-
-
-def post_files(request: Request, directory: Path) -> "Response":
-    builder = ResponseBuilder().add_version()
-    body = _parse_body(request.body)
-    file_name: str = request.route.values.pop()
-    try:
-        file = (directory / file_name).write_bytes(body)
-    except Exception:
-        response = not_found(request)
-    else:
-        response = (
-            builder.add_code(200)
-            .add_status("OK")
-            .add_type("application/octet-stream")
-            .add_body(file)
-            .build()
-        )
-    return response
-
-
-def _parse_body(body: typing.Any) -> bytes:
-    match body:
-        case bytes():
-            return body
-        case str():
-            return body.encode(encoding="utf-8")
-        case dict() | list():
-            return json.dumps(body, indent=4).encode(encoding="utf-8")
-        case _:
-            raise ValueError(f"Invalid body type: {type(body)}")
 
 
 @dataclasses.dataclass
@@ -109,11 +15,14 @@ class Response:
     body: typing.Any | None = None
 
     def __str__(self) -> str:
-        status_line = f"{self.version} {self.code} {self.status}{CRLF}"
+        status_line = f"{self.version} {self.code} {self.status}"
         header_lines = "".join(
             f"{key}: {value}{CRLF}" for key, value in self.headers.items()
         )
-        return f"{status_line}{header_lines}{CRLF + self.body if self.body is not None else CRLF}"
+        return (
+            f"{status_line}{CRLF}{header_lines}"
+            f"{CRLF + self.body if self.body is not None else CRLF}"
+        )
 
     def __bytes__(self) -> bytes:
         return str(self).encode()
