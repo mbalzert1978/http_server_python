@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import typing
+from http import HTTPStatus
 
 CRLF = "\r\n"
 
@@ -10,7 +11,7 @@ CRLF = "\r\n"
 class Response:
     code: int
     version: str
-    status: str
+    status: HTTPStatus
     headers: dict[str, str] = dataclasses.field(default_factory=dict)
     body: typing.Any | None = None
 
@@ -35,7 +36,7 @@ class Response:
 class ResponseBuilder:
     code: int | None = None
     version: str | None = None
-    status: str | None = None
+    status: HTTPStatus | None = None
     headers: dict[str, str] | None = None
     body: typing.Any | None = None
 
@@ -51,7 +52,7 @@ class ResponseBuilder:
         self.version = version
         return self
 
-    def add_status(self, status: str = "OK") -> typing.Self:
+    def add_status(self, status: HTTPStatus = HTTPStatus.OK) -> typing.Self:
         self.status = status
         return self
 

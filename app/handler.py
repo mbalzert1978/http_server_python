@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from pathlib import Path
 
 from app.headers import Request
@@ -11,8 +12,8 @@ def not_found(_: Request) -> "Response":
     return (
         ResponseBuilder()
         .add_version()
-        .add_code(404)
-        .add_status("NOT FOUND")
+        .add_code(HTTPStatus.NOT_FOUND)
+        .add_status(HTTPStatus.NOT_FOUND)
         .add_type()
         .add_body("")
         .build()
@@ -57,8 +58,8 @@ def get_files(request: Request, directory: Path) -> "Response":
         return (
             ResponseBuilder()
             .add_version()
-            .add_code(200)
-            .add_status("OK")
+            .add_code(HTTPStatus.OK)
+            .add_status()
             .add_type("application/octet-stream")
             .add_body(file)
             .build()
@@ -83,8 +84,8 @@ def post_files(request: Request, directory: Path) -> "Response":
         return (
             ResponseBuilder()
             .add_version()
-            .add_code(201)
-            .add_status("CREATED")
+            .add_code(HTTPStatus.CREATED)
+            .add_status(HTTPStatus.CREATED)
             .add_type()
             .add_body("")
             .build()
