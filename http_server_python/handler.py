@@ -26,14 +26,14 @@ def index(_: Request) -> "Response":
 
 
 def echo(request: Request) -> "Response":
-    return BUILDER.add_type().add_body(request.url.lstrip("/echo/")).build()
+    return BUILDER.add_type().add_body("/".join(request.route.values)).build()
 
 
 def user_agent(request: Request) -> "Response":
     return (
         BUILDER.add_type()
         .add_header(request.headers)
-        .add_body(request.headers.get("User-Agent"))
+        .add_body(request.headers.get("user-agent"))
         .build()
     )
 
