@@ -11,7 +11,7 @@ CRLF = "\r\n"
 class Response:
     code: int
     version: str
-    status: HTTPStatus
+    status: str
     headers: dict[str, str] = dataclasses.field(default_factory=dict)
     body: typing.Any | None = None
 
@@ -36,7 +36,7 @@ class Response:
 class ResponseBuilder:
     code: int | None = None
     version: str | None = None
-    status: HTTPStatus | None = None
+    status: str | None = None
     headers: dict[str, str] | None = None
     body: typing.Any | None = None
 
@@ -44,7 +44,7 @@ class ResponseBuilder:
         self.add_header({"Content-Type": type_})
         return self
 
-    def add_code(self, code: int = 200) -> typing.Self:
+    def add_code(self, code: int = HTTPStatus.OK) -> typing.Self:
         self.code = code
         return self
 
@@ -52,7 +52,7 @@ class ResponseBuilder:
         self.version = version
         return self
 
-    def add_status(self, status: HTTPStatus = HTTPStatus.OK) -> typing.Self:
+    def add_status(self, status: str = "OK") -> typing.Self:
         self.status = status
         return self
 
