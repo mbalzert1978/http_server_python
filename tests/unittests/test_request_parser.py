@@ -1,6 +1,6 @@
 from http import HTTPMethod
 
-from app.request import request_from_stream
+from http_server_python.request import request_from_stream
 from tests.resources import byte
 
 
